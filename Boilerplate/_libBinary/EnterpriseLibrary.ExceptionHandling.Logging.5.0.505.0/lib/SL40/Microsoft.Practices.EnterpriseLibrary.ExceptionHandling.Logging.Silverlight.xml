@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Silverlight</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ExceptionHandlingLoggingConfigurationSourceBuilderExtensions">
+            <summary>
+            Extensions to <see cref="T:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationAddExceptionHandlers"/> that support logging exceptions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ExceptionHandlingLoggingConfigurationSourceBuilderExtensions.LogToCategory(Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationAddExceptionHandlers,System.String)">
+            <summary>
+            Category name to log <see cref="T:System.Exception"/> under.  This should align with a category name defined through the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.LoggingConfigurationSourceBuilderExtensions"/> extensions.
+            </summary>
+            <param name="context">Interface to extend to provide this handler fluent interface.</param>
+            <param name="categoryName">Name of the category.</param>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationLoggingProvider">
+            <summary>
+            Defines the fluent configuration extensions for the logging provider.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationLoggingProvider.UsingTitle(System.String)">
+            <summary>
+            Title to use when logging an exception.
+            </summary>
+            <param name="title"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationLoggingProvider.UsingEventId(System.Int32)">
+            <summary>
+            EventId to use when logging an exception.
+            </summary>
+            <param name="eventId"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationLoggingProvider.UsingExceptionFormatter(System.Type)">
+            <summary>
+            Type of exception formatter to use when logging.
+            </summary>
+            <param name="exceptionFormatterType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationLoggingProvider.UsingExceptionFormatter``1">
+            <summary>
+            Type of exception formatter to use when logging.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationLoggingProvider.WithSeverity(Microsoft.Practices.EnterpriseLibrary.Logging.Diagnostics.TraceEventType)">
+            <summary>
+            Severity to use when logging an exception.
+            </summary>
+            <param name="severity"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.Fluent.IExceptionConfigurationLoggingProvider.WithPriority(System.Int32)">
+            <summary>
+            Priority to use when logging an exception.
+            </summary>
+            <param name="priority"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData">
+            <summary>
+            Represents configuration for a <see cref="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler"/>.
+            </summary>
+            <summary>
+            Represents configuration for a <see cref="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler"/>.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.GetRegistrations(System.String)">
+            <summary>
+            Returns the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ContainerModel.TypeRegistration"/> for the exception handler data provided.
+            </summary>
+            <param name="namePrefix">The prefix to use when building references to child elements.</param>
+            <returns>
+            A <see cref="T:Microsoft.Practices.EnterpriseLibrary.Common.Configuration.ContainerModel.TypeRegistration"/> for the exception handler data
+            </returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.#ctor">
+            <summary>
+            Initializes with default values.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.FormatterType">
+            <summary>
+            Gets or sets the formatter type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.LogCategory">
+            <summary>
+            Gets or sets the default log category.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.EventId">
+            <summary>
+            Gets or sets the default event ID.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.Severity">
+            <summary>
+            Gets or sets the default severity.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.Title">
+            <summary>
+             Gets or sets the default title.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.FormatterTypeName">
+            <summary>
+            Gets or sets the formatter fully qualified assembly type name.
+            </summary>
+            <value>
+            The formatter fully qualified assembly type name
+            </value>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.Priority">
+            <summary>
+            Gets or sets the minimum value for messages to be processed.  Messages with a priority
+            below the minimum are dropped immediately on the client.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Configuration.LoggingExceptionHandlerData.UseDefaultLogger">
+            <summary>
+            Gets or sets the default logger to be used.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler">
+            <summary>
+            Represents an <see cref="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.IExceptionHandler"/> that formats
+            the exception into a log message and sends it to
+            the Enterprise Library Logging Application Block.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler.#ctor(System.String,System.Int32,Microsoft.Practices.EnterpriseLibrary.Logging.Diagnostics.TraceEventType,System.String,System.Int32,System.Type,Microsoft.Practices.EnterpriseLibrary.Logging.LogWriter)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler"/> class with the log category, the event ID, the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Logging.Diagnostics.TraceEventType"/>,
+            the title, minimum priority, the formatter type, and the <see cref="T:Microsoft.Practices.EnterpriseLibrary.Logging.LogWriter"/>.
+            </summary>
+            <param name="logCategory">The default category</param>
+            <param name="eventId">An event id.</param>
+            <param name="severity">The severity.</param>
+            <param name="title">The log title.</param>
+            <param name="priority">The minimum priority.</param>
+            <param name="formatterType">The type <see cref="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.ExceptionFormatter"/> type.</param>
+            <param name="writer">The <see cref="T:Microsoft.Practices.EnterpriseLibrary.Logging.LogWriter"/> to use.</param>
+            <remarks>
+            The type specified for the <paramref name="formatterType"/> attribute must have a public constructor with
+            parameters of type <see name="TextWriter"/>, <see cref="T:System.Exception"/> and <see cref="T:System.Guid"/>.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler.HandleException(System.Exception,System.Guid)">
+            <summary>
+            <para>Handles the specified <see cref="T:System.Exception"/> object by formatting it and writing to the configured log.</para>
+            </summary>
+            <param name="exception"><para>The exception to handle.</para></param>        
+            <param name="handlingInstanceId">
+            <para>The unique ID attached to the handling chain for this handling instance.</para>
+            </param>
+            <returns><para>Modified exception to pass to the next handler in the chain.</para></returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler.WriteToLog(System.String,System.Collections.IDictionary)">
+            <summary>
+            Writes the specified log message using 
+            the Logging Application Block's <see cref="M:Microsoft.Practices.EnterpriseLibrary.Logging.LogWriter.Write(Microsoft.Practices.EnterpriseLibrary.Logging.LogEntry)"/>
+            method.
+            </summary>
+            <param name="logMessage">The message to write to the log.</param>
+            <param name="exceptionData">The exception's data.</param>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler.CreateStringWriter">
+            <summary>
+            Creates an instance of the <see cref="T:System.IO.StringWriter"/>
+            class using its default constructor.
+            </summary>
+            <returns>A newly created <see cref="T:System.IO.StringWriter"/></returns>
+        </member>
+        <member name="M:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.LoggingExceptionHandler.CreateFormatter(System.IO.StringWriter,System.Exception,System.Guid)">
+            <summary>
+            Creates an <see cref="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.ExceptionFormatter"/>
+            object based on the configured ExceptionFormatter
+            type name.
+            </summary>
+            <param name="writer">The stream to write to.</param>
+            <param name="exception">The <see cref="T:System.Exception"/> to pass into the formatter.</param>
+            <param name="handlingInstanceID">The id of the handling chain.</param>
+            <returns>A newly created <see cref="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.ExceptionFormatter"/></returns>
+        </member>
+        <member name="T:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Properties.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Properties.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Properties.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Properties.Resources.ErrorFormatterTypeNameNotSet">
+            <summary>
+              Looks up a localized string similar to The formatter type name was not set for logging exception handler {0}..
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Properties.Resources.ErrorLogCategoryNotSet">
+            <summary>
+              Looks up a localized string similar to The log category was not set for logging exception handler {0}..
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Properties.Resources.ErrorTitleNotSet">
+            <summary>
+              Looks up a localized string similar to The title was not set for logging exception handler {0}..
+            </summary>
+        </member>
+        <member name="P:Microsoft.Practices.EnterpriseLibrary.ExceptionHandling.Logging.Properties.Resources.MissingConstructor">
+            <summary>
+              Looks up a localized string similar to The configured exception formatter &apos;{0}&apos; must expose a public constructor that takes a TextWriter object, an Exception object and a GUID instance as parameters..
+            </summary>
+        </member>
+    </members>
+</doc>

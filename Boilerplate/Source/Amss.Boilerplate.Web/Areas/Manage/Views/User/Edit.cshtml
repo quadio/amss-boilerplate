@@ -1,0 +1,23 @@
+﻿@model Amss.Boilerplate.Web.Areas.Manage.Models.UserModel
+
+@{
+    ViewBag.Title = "Edit User";
+}
+
+@using (Html.BeginForm("Edit", "User", new {area = "Manage"})) {
+    <fieldset>
+        <legend>Edit User</legend>
+
+        @Html.Partial("_userDetails", this.Model)
+        
+        <div class="form-actions btn-group">
+            <input type="submit" value="Update" class="btn btn-large btn-primary" />
+            @Html.ActionLink("Change Password", "List", "User", null, new { @class = "btn btn-large", onclick = "return alert('not implemented yet');" })
+            @Html.ActionLink("Back to List", "List", "User", null, new { @class = "btn btn-large" })
+        </div>
+    </fieldset>
+}
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

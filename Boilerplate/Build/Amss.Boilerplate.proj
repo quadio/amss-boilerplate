@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Default" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <ProductName>Amss.Boilerplate</ProductName>
+        <Platform>Any CPU</Platform>
+    </PropertyGroup>
+
+    <Import Project="Common.Build.Targets" />
+
+    <ItemGroup>
+        <CompileProjectList
+            Include="$(SolutionRoot)\Amss.Boilerplate.sln" />
+    </ItemGroup>
+
+     <ItemGroup>
+        <BeforePackSubstitutionFiles Include="Amss.Boilerplate.Api.Web.config">
+            <ContentFile>Amss.Boilerplate.Api\Web.config</ContentFile>
+        </BeforePackSubstitutionFiles>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <ProjectToPackage Include="Amss.Boilerplate.Web\Amss.Boilerplate.Web.csproj">
+            <Path>Packages</Path>
+        </ProjectToPackage>
+        <ProjectToPackage Include="Amss.Boilerplate.Api\Amss.Boilerplate.Api.csproj">
+            <Path>Packages</Path>
+        </ProjectToPackage>
+        <FileToPublish Include="Amss.Boilerplate.Migrations\bin\Migrate.exe;
+                                Amss.Boilerplate.Migrations\bin\Migrate.exe.config;
+                                Amss.Boilerplate.Migrations\bin\FluentMigrator.Runner.dll;
+                                Amss.Boilerplate.Migrations\bin\FluentMigrator.dll;
+                                Amss.Boilerplate.Migrations\bin\Amss.Boilerplate.Migrations.dll;">
+            <Path>Database</Path>
+        </FileToPublish>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <CommonCodeAnalysisRules Include="-Microsoft.Design#CA1014" /> <!-- Mark assemblies with CLSCompliant -->
+        <CommonCodeAnalysisRules Include="-Microsoft.Design#CA1020" /> <!-- Avoid namespaces with few types -->
+        <CommonCodeAnalysisRules Include="-Microsoft.Design#CA2210" /> <!-- Assemblies should have valid strong names -->
+        <CommonCodeAnalysisRules Include="-Microsoft.Naming#CA1703" /> <!-- Resource strings should be spelled correctly -->
+        <CommonCodeAnalysisRules Include="-Microsoft.Performance#CA1811" /> <!-- Avoid uncalled private code -->
+        <CommonCodeAnalysisRules Include="-Microsoft.Performance#CA1812" /> <!-- Avoid uninstantiated internal classes -->
+    </ItemGroup>
+
+    <!--///////////////////////////Target PrepareGroups///////////////////////////////////////////////////////////////////-->
+    <Target Name="PrepareGroups">
+        <GetSolutionProjects Solution="%(CompileProjectList.Fullpath)">
+            <Output ItemName="SolutionItems" TaskParameter="Output"/>
+        </GetSolutionProjects>
+        
+        <ItemGroup>
+            <SolutionProjects Include="@(SolutionItems)" Condition="%(Extension) == '.csproj'"/>  
+            
+            <CodeQualityProjectList
+                Include="@(SolutionProjects)"
+                Exclude="$(SolutionRoot)\**\*Test*.csproj;"/>
+            
+            <StyleCopCodeQualityProjectList
+                Include="@(CodeQualityProjectList)" />
+
+            <SimianCodeQualityProjectList
+                Include="@(CodeQualityProjectList)" />
+
+            <FxCopCodeQualityProjectList1
+                Include="@(CodeQualityProjectList)" />
+            
+            <FxCopCodeQualityProjectGroup Include="4.0">
+                <Items>@(FxCopCodeQualityProjectList1)</Items>
+            </FxCopCodeQualityProjectGroup>
+
+            <TestProjectList
+                Include="$(SolutionRoot)\**\*Test*.csproj" />
+                
+        </ItemGroup>
+
+    </Target>
+    <!--///////////////////////////End Target PrepareGroups///////////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target Default///////////////////////////////////////////////////////////////////-->
+    <Target Name="Default" DependsOnTargets="PrepareGroups;Main" />
+    <!--///////////////////////////End Target Default///////////////////////////////////////////////////////////////-->
+
+    <!--///////////////////////////Targets CodeAnalysis///////////////////////////////////////////////////////////////////-->
+    <Target Name="FxCop" DependsOnTargets="PrepareGroups;RunFxCop" />
+    <Target Name="StyleCop" DependsOnTargets="PrepareGroups;RunStyleCop" />
+    <Target Name="Simian" DependsOnTargets="PrepareGroups;RunSimian" />
+    <!--///////////////////////////End Target CodeAnalysis///////////////////////////////////////////////////////////////-->
+
+    <!--///////////////////////////Target Test//////////////////////////////////////////////////////////////////////-->
+    <Target Name="Test">
+    </Target>
+    <!--///////////////////////////End Target Test//////////////////////////////////////////////////////////////////-->
+
+</Project>

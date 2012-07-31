@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <ItemGroup>
+        <Tokens Include="DeploymentServer">
+            <ReplacementValue>local</ReplacementValue>
+        </Tokens>
+        <Tokens Include="DatabaseConnection">
+            <ReplacementValue>Data Source=(local);Initial Catalog=boilerplatedb;Integrated Security=True</ReplacementValue>
+        </Tokens>
+    </ItemGroup>
+
+</Project>

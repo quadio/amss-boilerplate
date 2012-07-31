@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <BuildType Condition="'$(BuildType)' == ''">Default</BuildType>
+        <DeploymentEnvironmentType Condition="'$(DeploymentEnvironmentType)' == ''">$(BuildType)</DeploymentEnvironmentType>
+        <ProjectRoot Condition="'$(ProjectRoot)' == ''">$([System.IO.Directory]::GetParent($(MSBuildProjectDirectory)))</ProjectRoot>
+        <SolutionRoot Condition="'$(SolutionRoot)' == ''">$(ProjectRoot)\Source</SolutionRoot>
+        <AutobuildRoot Condition="'$(AutobuildRoot)' == ''">$(ProjectRoot)\Build</AutobuildRoot>
+        <AssemblyRoot Condition="'$(AssemblyRoot)' == ''">$(AutobuildRoot)\Assembly</AssemblyRoot>
+        <BuildParamsRoot Condition="'$(BuildParamsRoot)' == ''">$(AutobuildRoot)\BuildParams</BuildParamsRoot>
+        <SetupParamsRoot Condition="'$(SetupParamsRoot)' == ''">$(AutobuildRoot)\SetupParams</SetupParamsRoot>
+        <ArchiveRoot Condition="'$(ArchiveRoot)' == ''">$(AutobuildRoot)\Archive</ArchiveRoot>
+        <CodeMetricsRoot Condition="'$(CodeMetricsRoot)' == ''">$(AutobuildRoot)\Metrics</CodeMetricsRoot>
+
+        <BuildTypeOverrideFile Condition="'$(BuildTypeOverrideFile)' == ''">$(BuildParamsRoot)\$(BuildType)\Custom.Targets</BuildTypeOverrideFile>
+        <DeploymentRegularOverrideFile Condition="'$(DeploymentRegularOverrideFile)' == ''">$(SetupParamsRoot)\Custom.Targets</DeploymentRegularOverrideFile>
+        <DeploymentEnvironmentTypeOverrideFile Condition="'$(DeploymentEnvironmentTypeOverrideFile)' == ''">$(SetupParamsRoot)\$(DeploymentEnvironmentType)\Custom.Targets</DeploymentEnvironmentTypeOverrideFile>
+        <UserOverrideFile Condition="'$(UserOverrideFile)' == ''">$(AutobuildRoot)\LocalParams\$(ComputerName).Targets</UserOverrideFile>
+        <StyleCopSettingsFile Condition="'$(StyleCopSettingsFile)' == ''">$(SolutionRoot)\Settings.StyleCop</StyleCopSettingsFile>
+        <GlobalVersionInfoFile Condition="'$(GlobalVersionInfoFile)' == ''">$(SolutionRoot)\Common\GlobalVersionInfo.cs</GlobalVersionInfoFile>
+        <DictionaryFile Condition="'$(DictionaryFile)' == ''">$(SolutionRoot)\Common\Dictionary.xml</DictionaryFile>
+
+        <ProductName Condition="'$(ProductName)' == ''">Product</ProductName>
+        <ProductPrefix Condition="'$(ProductPrefix)' == ''">$(ProductName)</ProductPrefix>
+        <BuildRevision Condition="'$(BuildRevision)' == ''">0</BuildRevision>
+        <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0.$(BuildRevision)</ProductVersion>
+
+        <PublicKeyToken Condition="'$(PublicKeyToken)' == ''">null</PublicKeyToken>
+
+        <VersionFilePrefix Condition="'$(VersionFilePrefix)' == ''">$(ProductName)</VersionFilePrefix>
+        <ProductVersionFile Condition="'$(ProductVersionFile)' == ''">$(SolutionRoot)\$(VersionFilePrefix).product.version</ProductVersionFile>
+        <BuildVersionFile Condition="'$(BuildVersionFile)' == ''">$(AutobuildRoot)\$(VersionFilePrefix).build.version</BuildVersionFile>
+
+        <AllowUserOverride Condition="'$(AllowUserOverride)' == ''">true</AllowUserOverride>
+        <PerformVersionActualization Condition="'$(PerformVersionActualization)' == ''">true</PerformVersionActualization>
+        <PerformVersionPropagation Condition="'$(PerformVersionPropagation)' == ''">true</PerformVersionPropagation>
+        <PerformCleanBeforeBuild Condition="'$(PerformCleanBeforeBuild)' == ''">false</PerformCleanBeforeBuild>
+        <PerformUnitTesting Condition="'$(PerformUnitTesting)' == ''">true</PerformUnitTesting>
+        <PerformCodeAnalysis Condition="'$(PerformCodeAnalysis)' == ''">true</PerformCodeAnalysis>
+        <PerformArchive Condition="'$(PerformArchive)' == ''">true</PerformArchive>
+        <PerformDeploy Condition="'$(PerformDeploy)' == ''">true</PerformDeploy>
+        <PerformBuildIncrement Condition="'$(PerformBuildIncrement)' == ''">false</PerformBuildIncrement>
+        <ResetChangesAfterBuild Condition="'$(ResetChangesAfterBuild)' == ''">true</ResetChangesAfterBuild>
+    </PropertyGroup>
+
+    <Import Project="Common.Tasks.Targets" />
+    <Import Project="Common.Tasks.Extra.Targets" />
+
+    <Import Project="$(BuildTypeOverrideFile)"
+        Condition="Exists('$(BuildTypeOverrideFile)')" />
+
+    <Import Project="$(DeploymentRegularOverrideFile)"
+        Condition="Exists('$(DeploymentRegularOverrideFile)')" />
+
+    <Import Project="$(DeploymentEnvironmentTypeOverrideFile)"
+        Condition="Exists('$(DeploymentEnvironmentTypeOverrideFile)')" />
+
+    <Import Project="$(UserOverrideFile)"
+        Condition="$(AllowUserOverride) AND Exists('$(UserOverrideFile)')" />
+
+
+    <!--///////////////////////////Target Main///////////////////////////////////////////////////////////////////-->
+    <Target Name="Main">
+
+        <CallTarget Targets="PrebuildVersionManagement" />
+        <CallTarget Targets="Build" />
+        <CallTarget Targets="Deploy" />
+        <CallTarget Targets="PostDeployVersionManagement" />
+
+    </Target>
+    <!--///////////////////////////End Target Main///////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target PrebuildVersionManagement/////////////////////////////////////////////////-->
+    <Target Name="PrebuildVersionManagement" DependsOnTargets="ActualizeVersion;PropagateVersion" />
+    <!--///////////////////////////End Target PrebuildVersionManagement/////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target Build/////////////////////////////////////////////////////////////////////-->
+    <Target Name="Build" DependsOnTargets="Clean;Compile;MakeDistributive;PostCompileAnalysis;CopyDistributive" />
+    <!--///////////////////////////End Target Build/////////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target PostCompileAnalysis///////////////////////////////////////////////////////-->
+    <Target Name="PostCompileAnalysis" DependsOnTargets="RunIntegrationalTestPrepare;RunTests;RunStyleCop;RunSimian;RunFxCop" />
+    <!--///////////////////////////End Target PostCompileAnalysis///////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target Deploy////////////////////////////////////////////////////////////////////-->
+    <Target Name="Deploy" DependsOnTargets="Install;ValidateProduct" Condition="$(PerformDeploy) And $(PerformArchive)"/>
+    <!--///////////////////////////End Target Deploy////////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target PostDeployVersionManagement///////////////////////////////////////////////-->
+    <Target Name="PostDeployVersionManagement">
+        <CallTarget Targets="IncrementBuild" Condition="$(PerformBuildIncrement)" />
+        <CallTarget Targets="ResetChanges" Condition="$(ResetChangesAfterBuild)" />
+    </Target>
+    <!--///////////////////////////End Target PostDeployVersionManagement///////////////////////////////////////////-->
+
+
+</Project>

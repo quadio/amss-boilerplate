@@ -1,0 +1,41 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#
+string[] rights = new string[]
+{ 
+	"Admin", 
+	"SuperAdmin" 
+};
+
+
+
+
+
+#>
+namespace Amss.Boilerplate.Data
+{
+    public enum AccessRight
+    {
+<#
+		foreach(var r in rights)
+		{
+			this.Write("        {0},\r\n", r);
+		}
+#>
+    }
+
+    public static class AccessRightRegistry
+    {
+<#
+		for(var i = 0; i < rights.Length; i++)
+		{
+			var r = rights[i];
+			this.Write("        public const string {0} = \"{0}\";\r\n", r);
+			if(i < rights.Length - 1)
+			{
+				this.Write("\r\n");
+			}
+		}
+#>
+    }
+}

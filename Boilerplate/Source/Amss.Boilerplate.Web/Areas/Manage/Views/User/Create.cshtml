@@ -1,0 +1,23 @@
+﻿@model Amss.Boilerplate.Web.Areas.Manage.Models.UserModel
+
+@{
+    ViewBag.Title = "Create User";
+}
+
+@using (Html.BeginForm("Create", "User", new { area = "Manage" }))
+{
+    <fieldset>
+        <legend>Create User</legend>
+
+        @Html.Partial("_userDetails", this.Model)
+        
+        <div class="form-actions btn-group">
+                <input type="submit" value="Create" class="btn btn-large btn-primary" />
+                @Html.ActionLink("Back to List", "List", "User", null, new { @class = "btn btn-large" })
+        </div>
+    </fieldset>
+}
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

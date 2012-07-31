@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <MSBuildProgramFiles64>C:\Program Files</MSBuildProgramFiles64>
+        <StyleCopTaskAssembly Condition="'$(StyleCopTaskAssembly)' == ''">$(MSBuildProgramFiles32)\StyleCop 4.7\StyleCop.dll</StyleCopTaskAssembly>
+        <NUnitPath Condition="'$(NUnitPath)' == ''">$(MSBuildProgramFiles32)\NUnit 2.5.10\bin\net-2.0</NUnitPath>
+        <NCoverPath Condition="'$(NCoverPath)' == ''">$(MSBuildProgramFiles64)\NCover</NCoverPath>
+        <FxCopPath Condition="'$(FxCopPath)' == ''">$(MSBuildProgramFiles32)\Microsoft Fxcop 10.0</FxCopPath>
+        <SimianPath Condition="'$(SimianPath)' == ''">$(MSBuildProgramFiles32)\Simian\bin</SimianPath>
+        <ExtensionTasksPath>.\</ExtensionTasksPath>
+        <MSBuildCommunityTasksPath>.\</MSBuildCommunityTasksPath>
+        <MSBuildMercurialTasksPath>.\</MSBuildMercurialTasksPath>
+        <MSBuildGitTasksPath>.\</MSBuildGitTasksPath>
+        <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    </PropertyGroup>
+    <PropertyGroup>
+        <CoverageReports>
+            <Report>
+                <ReportType>SymbolModule</ReportType>
+                <Format>Xml</Format>
+                <OutputPath>Metrics\ncover-results.xml</OutputPath>
+            </Report>
+        </CoverageReports>
+    </PropertyGroup>
+
+    <Import Project=".\Tasks\MSBuild.ExtensionPack.Tasks\MSBuild.ExtensionPack.tasks" />
+    <Import Project=".\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets" />
+    <Import Project=".\Tasks\MSBuild.Ncover.Tasks\NCover.MSBuildTasks.Targets" />
+    <Import Project=".\Tasks\MSBuild.Mercurial\MSBuild.Mercurial.tasks" />
+    <Import Project=".\Tasks\MSBuild.Git\MSBuild.Git.tasks" />
+    <UsingTask AssemblyFile="$(StyleCopTaskAssembly)" TaskName="Microsoft.StyleCop.StyleCopTask" />
+
+
+    <!--///////////////////////////Target ActualizeVersion//////////////////////////////////////////////////////////-->
+    <Target Name="ActualizeVersion" Condition="$(PerformVersionActualization)"><!-- reads revision number from repository and use it in product version number -->
+
+        <!-- read version from file -->
+        <MSBuild.Community.Tasks.Version
+             VersionFile="$(ProductVersionFile)"
+             MajorType="None"
+             MinorType="None"
+             BuildType="None"
+             RevisionType="None">
+            <Output TaskParameter="Major" PropertyName="Major" />
+            <Output TaskParameter="Minor" PropertyName="Minor" />
+            <Output TaskParameter="Build" PropertyName="Build" />
+        </MSBuild.Community.Tasks.Version>
+        
+        <GitVersion LocalPath="$(ProjectRoot)">
+            <Output TaskParameter="Changeset" PropertyName="Changeset"/>
+            <Output TaskParameter="Revision" PropertyName="BuildRevision"/>
+        </GitVersion>
+        
+        <!-- create build version number -->
+        <CreateProperty Value="$(Major).$(Minor).$(Build).$(BuildRevision)">
+            <Output
+                TaskParameter="Value"
+                PropertyName="ProductVersion" />
+        </CreateProperty>
+        
+        <!-- create build informational version number -->
+        <CreateProperty Value="$(Major).$(Minor).$(Build).$(BuildRevision) ($(Changeset))">
+            <Output
+                TaskParameter="Value"
+                PropertyName="ProductInformationalVersion" />
+        </CreateProperty>
+
+        <CreateItem 
+            Include="ProductVersion"
+            AdditionalMetadata="ReplacementValue=$(ProductVersion)">
+            <Output 
+                TaskParameter="Include" 
+                ItemName="Tokens"/>
+        </CreateItem>
+        
+        <CreateItem 
+            Include="ProductInformationalVersion"
+            AdditionalMetadata="ReplacementValue=$(ProductInformationalVersion)">
+            <Output 
+                TaskParameter="Include" 
+                ItemName="Tokens"/>
+        </CreateItem>
+        
+        <!-- save to file current build version number -->
+        <WriteLinesToFile Overwrite="true" File="$(BuildVersionFile)" Lines="$(ProductInformationalVersion)" />
+
+    </Target>
+    <!--///////////////////////////End Target ActualizeVersion//////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target PropogateVersion//////////////////////////////////////////////////////////-->
+    <Target Name="PropagateVersion" Condition="$(PerformVersionActualization) AND $(PerformVersionPropagation)"><!-- generates .cs file with version metadata and updates version inside deployed files -->
+
+        <Message Text="Propagating product version $(ProductVersion)" />
+
+        <CreateProperty Value="$(ProductVersion)">
+            <Output
+                TaskParameter="Value"
+                PropertyName="AssemblyVersion" />
+            <Output
+                TaskParameter="Value"
+                PropertyName="AssemblyFileVersion" />
+        </CreateProperty>
+        <CreateProperty Value="$(ProductInformationalVersion)">
+            <Output
+                TaskParameter="Value"
+                PropertyName="AssemblyInformationalVersion" />
+        </CreateProperty>
+
+        <MSBuild.Community.Tasks.AssemblyInfo
+            CodeLanguage="CS"
+            OutputFile="$(GlobalVersionInfoFile)"
+            AssemblyVersion="$(AssemblyVersion)"
+            AssemblyFileVersion="$(AssemblyFileVersion)"
+            AssemblyInformationalVersion="$(AssemblyInformationalVersion)" />
+        <MSBuild.Community.Tasks.FileUpdate
+            Condition="''!='@(VersionReplaceFileList)'"
+            Files="@(VersionReplaceFileList)"
+            Regex="($(ProductPrefix).*)(Version=\d+.\d+.\d+.\d+\x2C\s*Culture\x3Dneutral\x2C\s*PublicKeyToken\x3D$(PublicKeyToken))"
+            ReplacementText="$1Version=$(AssemblyVersion), Culture=neutral, PublicKeyToken=$(PublicKeyToken)" />
+
+    </Target>
+    <!--///////////////////////////End Target PropogateVersion//////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target PrepareEnvironment////////////////////////////////////////////////////////-->
+    <Target Name="PrepareEnvironment"><!-- removes folders from previous builds, creates folders for current build" /> -->
+
+        <RemoveDir
+            Directories="
+            $(CodeMetricsRoot)" />
+
+        <MakeDir
+            Directories="$(CodeMetricsRoot)"
+            Condition="!Exists('$(CodeMetricsRoot)')" />
+
+    </Target>
+    <!--///////////////////////////End Target PrepareEnvironment////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target Clean/////////////////////////////////////////////////////////////////////-->
+    <Target Name="Clean" Condition="$(PerformCleanBeforeBuild)"><!-- cleans previous compilation results -->
+
+        <MSBuild
+            Projects="@(CompileProjectList)"
+            Properties="Configuration=$(Configuration)"
+            StopOnFirstFailure="false"
+            ContinueOnError="true"
+            Targets="Clean" />
+
+        <CreateItem
+            Include="$(SolutionRoot)\**\*.csproj;$(SolutionRoot)\**\*.wixproj"
+            Exclude="">
+            <Output TaskParameter="Include"
+                ItemName="AllProjList" />
+        </CreateItem>
+
+        <RemoveDir Directories="@(AllProjList->'%(RootDir)%(Directory)bin');@(AllProjList->'%(RootDir)%(Directory)obj')" />
+
+    </Target>
+    <!--///////////////////////////End Target Clean/////////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target Compile///////////////////////////////////////////////////////////////////-->
+    <Target Name="Compile" Condition="'@(CompileProjectList)'!=''"><!-- compiles applications -->
+
+        <MSBuild
+            Projects="@(CompileProjectList)"
+            Properties="Configuration=$(Configuration);Platform=$(Platform);RevisionNumber=$(BuildRevision)"
+            StopOnFirstFailure="true"
+            ContinueOnError="false"
+            Targets="Rebuild" />
+
+    </Target>
+    <!--///////////////////////////End Target Compile///////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target MakeDistributive//////////////////////////////////////////////////////////-->
+    <Target Name="MakeDistributive">
+
+        <CallTarget Targets="MakeDistributiveInitialSubstitute" />
+        <CallTarget Targets="MakeDistributivePrepareFolders" />
+        <CallTarget Targets="MakeDistributiveSubstitute" />
+        <CallTarget Targets="MakeDistributiveSetupSubstitute" />
+
+        <Copy
+            SourceFiles="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile).bak"
+            DestinationFiles="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile)"
+            Condition="Exists('$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile).bak')" />
+        <Delete 
+            Files="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile).bak" 
+            Condition="Exists('$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile).bak')" />
+            
+    </Target>
+    <!--///////////////////////////End Target MakeDistributive//////////////////////////////////////////////////////-->
+
+    
+    <!--///////////////////////////Target MakeDistributiveSubstitute////////////////////////////////////////////////-->
+    <Target Name="MakeDistributiveInitialSubstitute" Condition="'@(BeforePackSubstitutionFiles)'!=''" Inputs="@(BeforePackSubstitutionFiles)" Outputs="%(Identity)">
+
+        <Copy
+            SourceFiles="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile)"
+            DestinationFiles="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile).bak"
+            Condition="Exists('$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile)')" />
+        
+        <Message
+            Text="Trying to substitute '$(BuildParamsRoot)\%(BeforePackSubstitutionFiles.Identity)' to '%(BeforePackSubstitutionFiles.ContentFile)'"
+            Condition="Exists('$(BuildParamsRoot)\%(BeforePackSubstitutionFiles.Identity)')" />
+        <MSBuild.Community.Tasks.Xml.XmlMassUpdate
+            ContentFile="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile)"
+            SubstitutionsFile="$(BuildParamsRoot)\%(BeforePackSubstitutionFiles.Identity)"
+            ContentRoot="%(BeforePackSubstitutionFiles.ContentRoot)"
+            SubstitutionsRoot="%(BeforePackSubstitutionFiles.SubstitutionsRoot)"
+            NamespaceDefinitions="%(BeforePackSubstitutionFiles.NamespaceDefinitions)"
+            Condition="Exists('$(BuildParamsRoot)\%(BeforePackSubstitutionFiles.Identity)')"
+            MergedFile="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile)" />
+        <Message
+            Text="Done"
+            Condition="Exists('$(BuildParamsRoot)\%(BeforePackSubstitutionFiles.Identity)')" />
+
+        <Message
+            Text="Trying to substiture '$(BuildParamsRoot)\$(BuildType)\%(BeforePackSubstitutionFiles.Identity)' to '%(BeforePackSubstitutionFiles.ContentFile)'"
+            Condition="Exists('$(BuildParamsRoot)\$(BuildType)\%(BeforePackSubstitutionFiles.Identity)')" />
+        <MSBuild.Community.Tasks.Xml.XmlMassUpdate
+            ContentFile="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile)"
+            SubstitutionsFile="$(BuildParamsRoot)\$(BuildType)\%(BeforePackSubstitutionFiles.Identity)"
+            ContentRoot="%(BeforePackSubstitutionFiles.ContentRoot)"
+            SubstitutionsRoot="%(BeforePackSubstitutionFiles.SubstitutionsRoot)"
+            NamespaceDefinitions="%(BeforePackSubstitutionFiles.NamespaceDefinitions)"
+            Condition="Exists('$(BuildParamsRoot)\$(BuildType)\%(BeforePackSubstitutionFiles.Identity)')"
+            MergedFile="$(SolutionRoot)\%(BeforePackSubstitutionFiles.ContentFile)" />
+        <Message
+            Text="Done"
+            Condition="Exists('$(BuildParamsRoot)\$(BuildType)\%(BeforePackSubstitutionFiles.Identity)')" />
+
+    </Target>
+    <!--///////////////////////////End Target MakeDistributiveSubstitute////////////////////////////////////////////////-->
+
+    
+    <!--///////////////////////////Target MakeDistributivePrepareFolders////////////////////////////////////////////-->
+    <Target Name="MakeDistributivePrepareFolders">
+
+        <RemoveDir Directories="$(AssemblyRoot)\" />
+
+        <!-- applications publishing -->
+        <CallTarget Targets="PackageProjects" />
+        <CallTarget Targets="PublishProjects" />
+        <CallTarget Targets="CopyApplications" />
+        <CallTarget Targets="CopyFiles" />
+
+        <!-- applications tests -->
+        <Exec
+            Command="xcopy /E /Q /Y &quot;%(TestProjectList.RootDir)%(TestProjectList.Directory)bin\$(Configuration)&quot; &quot;$(AssemblyRoot)\Tests\&quot;"
+            Condition="Exists('%(TestProjectList.RootDir)%(TestProjectList.Directory)bin\$(Configuration)')"
+            />
+
+        <!-- Setup scripts -->
+        <Exec
+            Command="xcopy /E /Q /Y &quot;$(SetupParamsRoot)\$(DeploymentEnvironmentType)&quot; &quot;$(AssemblyRoot)&quot;"
+            Condition="Exists('$(SetupParamsRoot)\$(DeploymentEnvironmentType)')"
+            />
+        <Delete Files="$(AssemblyRoot)\*.override;$(AssemblyRoot)\Custom.Targets" />
+        
+        <Exec
+            Command="xcopy /E /Q /Y &quot;$(SetupParamsRoot)\Output&quot; &quot;$(AssemblyRoot)\&quot;"
+            Condition="Exists('$(SetupParamsRoot)\Output')"
+            />
+            
+    </Target>
+    <!--///////////////////////////End Target MakeDistributivePrepareFolders////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target PackageProjects////////////////////////////////////////-->
+    <Target Name="PackageProjects" Inputs="@(ProjectToPackage)" Outputs="%(Identity).Dummy" Condition="'@(ProjectToPackage)'!=''">
+
+        <CreateProperty
+            Value="C:\Package\$(BuildType)-$(ProductVersion)">
+            <Output
+                    TaskParameter="Value"
+                    PropertyName="PackageTempDir" />
+        </CreateProperty>
+        <ConvertToAbsolutePath Paths="$(AssemblyRoot)">
+            <Output TaskParameter="AbsolutePaths" PropertyName="AbsoluteAssemblyRoot"/>
+        </ConvertToAbsolutePath>
+
+        <MSBuild
+            Projects="$(SolutionRoot)\%(ProjectToPackage.Identity)"
+            Properties="Configuration=$(Configuration);_PackageTempDir=$(PackageTempDir);DesktopBuildPackageLocation=$(AbsoluteAssemblyRoot)\%(ProjectToPackage.Path)\%(ProjectToPackage.Filename).zip"
+            StopOnFirstFailure="true"
+            ContinueOnError="false"
+            Targets="Package" />
+
+        <RemoveDir Directories="$(PackageTempDir)" />
+
+    </Target>
+    <!--///////////////////////////End Target PackageProjects////////////////////////////////////////-->
+
+    
+    <!--///////////////////////////Target PublishProjects////////////////////////////////////////-->
+    <Target Name="PublishProjects" Inputs="@(ProjectToPublish)" Outputs="%(Identity).Dummy" Condition="'@(ProjectToPublish)'!=''">
+
+        <ConvertToAbsolutePath Paths="$(AssemblyRoot)">
+            <Output TaskParameter="AbsolutePaths" PropertyName="AbsoluteAssemblyRoot"/>
+        </ConvertToAbsolutePath>
+        
+        <MSBuild
+            Projects="$(SolutionRoot)\%(ProjectToPublish.Identity)"
+            Properties="Configuration=$(Configuration);TargetProfile=%(ProjectToPublish.TargetProfile);PublishDir=$(AbsoluteAssemblyRoot)\%(ProjectToPublish.Path)\"
+            StopOnFirstFailure="true"
+            ContinueOnError="false"
+            Targets="Publish" />
+
+    </Target>
+    <!--///////////////////////////End Target PublishProjects////////////////////////////////////////-->
+
+    
+    <!--///////////////////////////Target CopyApplications////////////////////////////////////////-->
+    <Target Name="CopyApplications" Inputs="@(ApplicationToPublish)" Outputs="%(Identity).Dummy" Condition="'@(ApplicationToPublish)'!=''">
+
+        <Exec
+            Command="xcopy /E /Q /Y &quot;$(SolutionRoot)\%(ApplicationToPublish.Identity)&quot; &quot;$(AssemblyRoot)\%(ApplicationToPublish.Path)\&quot;"
+            />
+
+     </Target>
+    <!--///////////////////////////End Target CopyApplications////////////////////////////////////////-->
+
+    
+    <!--///////////////////////////Target CopyFiles////////////////////////////////////////-->
+    <Target Name="CopyFiles" Inputs="@(FileToPublish)" Outputs="%(Identity).Dummy" Condition="'@(FileToPublish)'!=''">
+
+        <Exec
+            Command="xcopy /Y &quot;$(SolutionRoot)\%(FileToPublish.Identity)&quot; &quot;$(AssemblyRoot)\%(FileToPublish.Path)\&quot;"
+            />
+
+     </Target>
+    <!--///////////////////////////End Target CopyFiles////////////////////////////////////////-->
+
+    
+    <!--///////////////////////////Target MakeDistributiveSubstitute////////////////////////////////////////////////-->
+    <Target Name="MakeDistributiveSubstitute" Condition="'@(AfterPackSubstitutionFiles)'!=''" Inputs="@(AfterPackSubstitutionFiles)" Outputs="%(Identity)">
+
+        <Message
+            Text="Trying to substiture '$(BuildParamsRoot)\%(AfterPackSubstitutionFiles.Identity)' to '%(AfterPackSubstitutionFiles.ContentFile)'"
+            Condition="Exists('$(BuildParamsRoot)\%(AfterPackSubstitutionFiles.Identity)')" />
+        <MSBuild.Community.Tasks.Xml.XmlMassUpdate
+            ContentFile="$(AssemblyRoot)\%(AfterPackSubstitutionFiles.ContentFile)"
+            SubstitutionsFile="$(BuildParamsRoot)\%(AfterPackSubstitutionFiles.Identity)"
+            ContentRoot="%(AfterPackSubstitutionFiles.ContentRoot)"
+            SubstitutionsRoot="%(AfterPackSubstitutionFiles.SubstitutionsRoot)"
+            NamespaceDefinitions="%(AfterPackSubstitutionFiles.NamespaceDefinitions)"
+            Condition="Exists('$(BuildParamsRoot)\%(AfterPackSubstitutionFiles.Identity)')"
+            MergedFile="$(AssemblyRoot)\%(AfterPackSubstitutionFiles.ContentFile)" />
+        <Message
+            Text="Done"
+            Condition="Exists('$(BuildParamsRoot)\%(AfterPackSubstitutionFiles.Identity)')" />
+
+        <Message
+            Text="Trying to substiture '$(BuildParamsRoot)\$(BuildType)\%(AfterPackSubstitutionFiles.Identity)' to '%(AfterPackSubstitutionFiles.ContentFile)'"
+            Condition="Exists('$(BuildParamsRoot)\$(BuildType)\%(AfterPackSubstitutionFiles.Identity)')" />
+        <MSBuild.Community.Tasks.Xml.XmlMassUpdate
+            ContentFile="$(AssemblyRoot)\%(AfterPackSubstitutionFiles.ContentFile)"
+            SubstitutionsFile="$(BuildParamsRoot)\$(BuildType)\%(AfterPackSubstitutionFiles.Identity)"
+            ContentRoot="%(AfterPackSubstitutionFiles.ContentRoot)"
+            SubstitutionsRoot="%(AfterPackSubstitutionFiles.SubstitutionsRoot)"
+            NamespaceDefinitions="%(AfterPackSubstitutionFiles.NamespaceDefinitions)"            
+            Condition="Exists('$(BuildParamsRoot)\$(BuildType)\%(AfterPackSubstitutionFiles.Identity)')"
+            MergedFile="$(AssemblyRoot)\%(AfterPackSubstitutionFiles.ContentFile)" />
+        <Message
+            Text="Done"
+            Condition="Exists('$(BuildParamsRoot)\$(BuildType)\%(AfterPackSubstitutionFiles.Identity)')" />
+
+    </Target>
+    <!--///////////////////////////End Target MakeDistributiveSubstitute////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target MakeDistributiveSetupSubstitute////////////////////////////////////////////////-->
+    <Target Name="MakeDistributiveSetupSubstitute">
+
+        <CreateItem Include="$(SetupParamsRoot)\*.override">
+            <Output TaskParameter="Include" ItemName="SetupOverrideFiles"/>
+        </CreateItem>
+        <CreateItem Include="$(SetupParamsRoot)\$(DeploymentEnvironmentType)\*.override">
+            <Output TaskParameter="Include" ItemName="SetupOverrideFiles"/>
+        </CreateItem>
+        
+        <CreateItem Include="$(AssemblyRoot)\**\%(SetupOverrideFiles.Filename)">
+            <Output TaskParameter="Include" ItemName="SetupContentFiles"/>
+        </CreateItem>
+
+        <ItemGroup>
+            <SetupContentFiles Include="$(AssemblyRoot)\**\%(SetupOverrideFiles.Filename)">
+                <SubstitutionsFile>%(SetupOverrideFiles.Identity)</SubstitutionsFile>
+            </SetupContentFiles>
+        </ItemGroup>
+    
+        <MSBuild.Community.Tasks.Xml.XmlMassUpdate
+            ContentFile="%(SetupContentFiles.Identity)"
+            SubstitutionsFile="%(SetupContentFiles.SubstitutionsFile)"
+            Condition="'@(SetupContentFiles)'!='' AND '%(SetupContentFiles.SubstitutionsFile)'!=''" />
+            
+        <ItemGroup Condition="'@(Tokens)' != ''" >
+            <TokenizedFiles Include="$(AssemblyRoot)\**\*.ps1;$(AssemblyRoot)\**\*.cmd;$(AssemblyRoot)\**\*.xml;$(AssemblyRoot)\**\*.config" />
+        </ItemGroup>
+        <Message Text="Will be tokenized: %(TokenizedFiles.Identity)" />
+        <TemplateFile Template="%(TokenizedFiles.FullPath)" OutputFilename="%(TokenizedFiles.FullPath).out" Tokens="@(Tokens)"	Condition="'@(TokenizedFiles)'!=''" />
+        <Copy SourceFiles="%(TokenizedFiles.FullPath).out" DestinationFiles="%(TokenizedFiles.FullPath)"	Condition="'@(TokenizedFiles)'!=''" />
+        <Delete Files="%(TokenizedFiles.FullPath).out" Condition="'@(TokenizedFiles)'!=''" />
+
+    </Target>
+    <!--///////////////////////////End Target MakeDistributiveSetupSubstitute////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target RunIntegrationalTestPrepare///////////////////////////////////////////////-->
+    <Target Name="RunIntegrationalTestPrepare" DependsOnTargets="PrepareEnvironment"><!-- prepares database for integrational tests -->
+        <!--
+            TODO:
+            1. create clean database
+            2. fill initial data
+        -->
+    </Target>
+    <!--///////////////////////////End Target RunIntegrationalTestPrepares//////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target RunTests//////////////////////////////////////////////////////-->
+    <Target Name="RunTests" DependsOnTargets="PrepareEnvironment">
+
+        <CallTarget Targets="RunUnitTestsAllinOne" />
+        <!--<CallTarget Targets="RunNcover" />-->
+
+    </Target>
+    <!--///////////////////////////End Target RunTests//////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target RunUnitTestsAllinOne//////////////////////////////////////////////////////-->
+    <Target Name="RunUnitTestsAllinOne" Condition="$(PerformUnitTesting)" DependsOnTargets="PrepareEnvironment">
+
+        <CreateItem
+            Include="$(AssemblyRoot)\Tests\*Tests*.dll"
+            Exclude="">
+            <Output
+                TaskParameter="Include"
+                ItemName="TestAssemblyList" />
+        </CreateItem>
+
+        <MSBuild.Community.Tasks.NUnit
+            Assemblies="@(TestAssemblyList)"
+            DisableShadowCopy="true"
+            ProjectConfiguration="$(Configuration)"
+            OutputXmlFile="$(CodeMetricsRoot)\nunit-results.xml"
+            ToolPath="$(NUnitPath)"
+            ContinueOnError="true" />
+
+    </Target>
+    <!--///////////////////////////End Target RunUnitTestsAllinOne//////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target RunNCover/////////////////////////////////////////////////////////////////-->
+    <Target Name="RunNCover" Condition="Exists('$(NCoverPath)') And $(PerformUnitTesting) AND '@(TestProjectList)' != ''" DependsOnTargets="PrepareEnvironment">
+        <!-- only ncover 3.4 supports .net 4 -->
+        <CreateItem
+            Include="$(AssemblyRoot)\Tests\*Tests*.dll"
+            Exclude="">
+            <Output
+                TaskParameter="Include"
+                ItemName="TestAssemblyList"
+                />
+        </CreateItem>
+
+        <NCover.MSBuildTasks.NCover
+            ToolPath="$(NCoverPath)"
+            TestRunnerExe="&quot;$(NUnitPath)\nunit-console.exe&quot;"
+            TestRunnerArgs="%(TestAssemblyList.FullPath) /nologo /nodots /noshadow /config=$(Configuration) /xml=$(CodeMetricsRoot)\nunit-%(TestAssemblyList.Filename)-results.xml"
+            CoverageFile="$(CodeMetricsRoot)\ncover-%(TestAssemblyList.FileName)-results.xml"
+            BuildId="$(ProductVersion)"
+            IncludeAssemblies="$(ProductPrefix)*.*"
+            WorkingDirectory=""
+            ContinueOnError="false">
+            <Output TaskParameter="ExitCode" ItemName="ExitNunitCodes"/>
+        </NCover.MSBuildTasks.NCover>
+
+        <CreateItem Include="$(CodeMetricsRoot)\ncover-*-results.xml">
+                <Output
+                    TaskParameter="Include"
+                    ItemName="CoverageDataFiles"/>
+        </CreateItem>
+
+        <NCover.MSBuildTasks.NCoverReporting
+            ToolPath="$(NCoverPath)"
+            CoverageDataPaths="@(CoverageDataFiles)"
+            MaxTopUncoveredToReport="50"
+            ProjectName="$(ProductName)"
+            SortBy="ClassLine"
+            OutputReport="$(CoverageReports)"
+            WorkingDirectory="$(CodeMetricsRoot)"
+            ContinueOnError="false" />
+
+        <Delete Files="@(CoverageDataFiles)" />
+
+        <!--Error Text="Unit Test error occurred" Condition="'%(ExitNunitCodes.Identity)'>10"/-->
+
+    </Target>
+    <!--////////////////////////////////End Target RunNCover////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target RunStyleCop///////////////////////////////////////////////////////////////-->
+    <Target Name="RunStyleCop" Condition="$(PerformCodeAnalysis)" DependsOnTargets="PrepareEnvironment">
+
+        <Message Text="StyleCop validation" />
+
+        <CreateItem
+            Include="%(StyleCopCodeQualityProjectList.RootDir)%(StyleCopCodeQualityProjectList.Directory)**\*.cs"
+            Exclude="%(StyleCopCodeQualityProjectList.RootDir)%(StyleCopCodeQualityProjectList.Directory)**\*.Designer.cs">
+            <Output TaskParameter="Include" ItemName="StyleCopFiles" />
+        </CreateItem>
+
+        <Microsoft.StyleCop.StyleCopTask
+            ProjectFullPath="$(SolutionRoot)"
+            SourceFiles="@(StyleCopFiles)"
+            ForceFullAnalysis="true"
+            DefineConstants="DEBUG TRACE CODE_ANALYSIS"
+            TreatErrorsAsWarnings="true"
+            CacheResults="false"
+            OverrideSettingsFile="$(StyleCopSettingsFile)"
+            OutputFile="$(CodeMetricsRoot)\stylecop-results.xml"
+            MaxViolationCount="1" />
+
+    </Target>
+    <!--///////////////////////////End Target RunStyleCop///////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target RunSimian/////////////////////////////////////////////////////////////////-->
+    <Target Name="RunSimian" Condition="$(PerformCodeAnalysis)" DependsOnTargets="PrepareEnvironment">
+
+        <Exec
+            Command="&quot;$(SimianPath)\simian-2.2.24.exe&quot; -threshold=10 -formatter=xml:&quot;$(CodeMetricsRoot)\simian-results.xml&quot; @(SimianCodeQualityProjectList->'-includes=&quot;%(RootDir)%(Directory)**\*.cs&quot; -includes=&quot;%(RootDir)%(Directory)*.cs&quot; -excludes=&quot;%(RootDir)%(Directory)**\*Designer*.cs&quot; -excludes=&quot;%(RootDir)%(Directory)**\*.g.cs&quot; -excludes=&quot;%(RootDir)%(Directory)**\Reference.cs&quot;', ' ')"
+            ContinueOnError="false"
+            IgnoreExitCode="true" />
+
+    </Target>
+    <!--///////////////////////////End Target RunSimian/////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target RunFxCop//////////////////////////////////////////////////////////////////-->
+    <Target Name="RunFxCop" Condition="$(PerformCodeAnalysis) AND '@(FxCopCodeQualityProjectGroup)' != '' " Inputs="@(FxCopCodeQualityProjectGroup)" Outputs="%(Identity)" DependsOnTargets="PrepareEnvironment">
+
+        <ItemGroup>
+            <FxCopCodeQualityProjectList
+                Remove="@(FxCopCodeQualityProjectList)" />
+            <FxCopCodeQualityProjectList
+                Include="%(FxCopCodeQualityProjectGroup.Items)" />
+                
+            <FxCopCodeQualityRules
+                Remove="@(FxCopCodeQualityRules)" />
+            <FxCopCodeQualityRules
+                Include="@(CommonCodeAnalysisRules)" />
+            <FxCopCodeQualityRules
+                Include="%(FxCopCodeQualityProjectGroup.Rules)" />
+        </ItemGroup>
+
+        <!-- include bin/$(Configuration)/file.dll -->
+        <CreateProperty
+            Value="%(FxCopCodeQualityProjectList.RootDir)%(FxCopCodeQualityProjectList.Directory)bin\$(Configuration)\%(FxCopCodeQualityProjectList.FileName).dll"
+            Condition="Exists('%(FxCopCodeQualityProjectList.RootDir)%(FxCopCodeQualityProjectList.Directory)bin\$(Configuration)\%(FxCopCodeQualityProjectList.FileName).dll')" >
+            <Output TaskParameter="Value" ItemName="FxCopFiles" />
+        </CreateProperty>
+
+        <!-- include bin/$(Configuration)/file.exe -->
+        <CreateProperty
+            Value="%(FxCopCodeQualityProjectList.RootDir)%(FxCopCodeQualityProjectList.Directory)bin\$(Configuration)\%(FxCopCodeQualityProjectList.FileName).exe"
+            Condition="Exists('%(FxCopCodeQualityProjectList.RootDir)%(FxCopCodeQualityProjectList.Directory)bin\$(Configuration)\%(FxCopCodeQualityProjectList.FileName).exe')" >
+            <Output TaskParameter="Value" ItemName="FxCopFiles" />
+        </CreateProperty>
+
+        <!-- include bin/file.dll -->
+        <CreateProperty
+            Value="%(FxCopCodeQualityProjectList.RootDir)%(FxCopCodeQualityProjectList.Directory)bin\%(FxCopCodeQualityProjectList.FileName).dll"
+            Condition="Exists('%(FxCopCodeQualityProjectList.RootDir)%(FxCopCodeQualityProjectList.Directory)bin\%(FxCopCodeQualityProjectList.FileName).dll')" >
+            <Output TaskParameter="Value" ItemName="FxCopFiles" />
+        </CreateProperty>
+
+        <Exec Command="&quot;$(FxCopPath)\fxcopcmd.exe&quot; @(FxCopFiles->'/f:&quot;%(Identity)&quot;', ' ') @(FxCopCodeQualityRules->'/rid:%(Identity)', ' ') /o:&quot;$(CodeMetricsRoot)\fxcop-results-%(FxCopCodeQualityProjectGroup.Identity).xml&quot; /igc /dic:&quot;$(DictionaryFile)&quot;"
+            ContinueOnError="true" />
+
+    </Target>
+    <!--///////////////////////////End Target RunFxCop//////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target CopyDistributive//////////////////////////////////////////////////////////-->
+    <Target Name="CopyDistributive" Condition="$(PerformArchive)">
+
+        <CreateProperty Value="$(ArchiveRoot)\$(ProductName)\$(BuildType)\$(ProductVersion)">
+            <Output
+                TaskParameter="Value"
+                PropertyName="ArchiveDistributivePath" />
+        </CreateProperty>
+        <RemoveDir
+            Directories="$(ArchiveDistributivePath)"
+            Condition="Exists('$(ArchiveDistributivePath)')" />
+        <MakeDir
+            Directories="$(ArchiveRoot)"
+            Condition="!Exists('$(ArchiveRoot)')" />
+        <Exec Command='xcopy /E /Q /Y "$(AssemblyRoot)" "$(ArchiveDistributivePath)\"' />
+        <RemoveDir
+            Directories="$(AssemblyRoot)" />
+
+    </Target>
+    <!--///////////////////////////End Target CopyDistributive//////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target Install///////////////////////////////////////////////////////////////////-->
+    <Target Name="Install">
+
+        <CreateProperty Value="$(ArchiveRoot)\$(ProductName)\$(BuildType)\$(ProductVersion)">
+            <Output
+                TaskParameter="Value"
+                PropertyName="ArchiveDistributivePath" />
+        </CreateProperty>
+        <Message Text="Path - $(ArchiveDistributivePath)\Setup.cmd" />
+        <Exec
+            Command="Setup.cmd"
+            CustomErrorRegularExpression="Setup Failure Reason"
+            WorkingDirectory="$(ArchiveDistributivePath)"
+            ContinueOnError="false" />
+        <Message Text="Installed" />
+
+    </Target>
+    <!--///////////////////////////End Target Install///////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target ValidateProduct///////////////////////////////////////////////////////////-->
+    <Target Name="ValidateProduct" Condition="'@(ValidationHttpRequest)' != '' ">
+
+        <HttpRequest Url="%(ValidationHttpRequest.Identity)"
+            EnsureResponseContains="%(ValidationHttpRequest.EnsureResponseContains)"
+            FailOnNon2xxResponse="true" />
+
+    </Target>
+    <!--///////////////////////////End Target ValidateProduct///////////////////////////////////////////////////////-->
+
+    
+</Project>

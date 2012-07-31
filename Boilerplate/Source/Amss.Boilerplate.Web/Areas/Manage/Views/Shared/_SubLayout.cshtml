@@ -1,0 +1,33 @@
+﻿@using Amss.Boilerplate.Web.Common
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section styles
+{
+    @RenderSection("styles", required: false)
+}
+<div class="row">
+    <div class="span3">
+        <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+                <li class="nav-header">Security</li>
+                <li @Html.ActiveController("User")>@Html.ActionLink("Users", "List", "User", new { area = "Manage" }, null)</li>
+                @*<li><a href="#">Roles</a></li>
+                <li><a href="#">Permissions</a></li>*@                
+                <li class="nav-header">Partner management</li>
+                <li @Html.ActiveController("Partner")>@Html.ActionLink("Partners", "List", "Partner", new { area = "Manage" }, null)</li>
+            </ul>
+        </div><!--/.well -->
+    </div><!--/span-->
+    <div class="span9" id="body">
+        @RenderSection("featured", required: false)       
+        <section class="content-wrapper main-content">
+        @RenderBody()
+        </section>
+    </div><!--/span-->
+</div><!--/row-->
+@section scripts
+{
+    @RenderSection("scripts", required: false)
+}

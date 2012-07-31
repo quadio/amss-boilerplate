@@ -1,0 +1,78 @@
+﻿@{
+    ViewBag.Title = "Partners List";
+}
+
+@section styles{
+    @Styles.Render("~/Content/css/jqgrid", "~/Content/css/datatables")
+}
+
+<h2>Partners list</h2>
+
+<hr />
+
+<div class="btn-toolbar">
+    <div class="btn-group">
+        @Html.ActionLink("New Partner", "Create", "Partner", null, new { @class = "btn btn-large" })
+     </div>
+</div>
+
+<hr />
+
+<table id="myDataTable" class="display table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Partner ID</th>
+            <th>Partner Name</th>
+            <th>Disabled</th>
+        </tr>
+    </thead>
+    <tbody> 
+    </tbody>
+</table>
+
+
+@section scripts {
+    @Scripts.Render("~/bundles/iqgrid")
+    @Scripts.Render("~/bundles/datatables")
+    
+    <script type="text/javascript">
+        
+        /* datatables*/
+        $(document).ready(function () {
+
+            $('#myDataTable').dataTable({
+                "bServerSide": true,
+                "sAjaxSource": '@Url.Action("List")',
+                "bProcessing": true,
+                "sDom": "<'row'<'span4'l><'span5'f>r>t<'row'<'span4'i><'span5'p>>",
+                "sPaginationType": "bootstrap",
+                "fnServerData": function ( sSource, aoData, fnCallback ) {
+                      $.ajax( {
+                        "dataType": 'json', 
+                        "type": "POST", 
+                        "url": sSource, 
+                        "data": aoData, 
+                        "success": fnCallback
+                      } );
+                    },
+                "aoColumns": [
+                                { "sName": "Id", "bVisible": false},
+                                { "sName": "PartnerName",
+                                    "bSearchable": true,
+                                    "bSortable": true,
+                                    "fnRender": function (oObj) {
+                                        return '<a href=\"/Manage/Partner/Edit/' + oObj.aData[0] + '\">' + oObj.aData[1] + '</a>';
+                                    }
+                                },
+                                { "sName": "Disabled",
+                                    "bSearchable": false,
+                                    "bSortable": false,
+                                    "fnRender": function (oObj) {
+                                        return oObj.aData[2] == "True" ? 'Y' : 'N';
+                                    }
+                                }
+                            ]
+            });
+        }); 
+    </script>
+}

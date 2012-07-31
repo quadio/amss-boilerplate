@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Default" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    
+    <!-- configure your product/company properties -->
+    <PropertyGroup>
+        <ProductName>MyProduct</ProductName>
+        <ProductDatabase>myproductdb</ProductDatabase>
+        <ProductDatabaseSchema>bplt</ProductDatabaseSchema>
+        <ProductCompanyName>MyCompany, Inc.</ProductCompanyName>
+    </PropertyGroup>    
+    
+    <!-- do not change anything under this line -->
+    <PropertyGroup>
+        <BoilerplateProductName>Amss.Boilerplate</BoilerplateProductName>
+        <BoilerplateDatabase>boilerplatedb</BoilerplateDatabase>
+        <BoilerplateDatabaseSchema>bplt</BoilerplateDatabaseSchema>
+        <BoilerplateCompanyName>MockCompany, Inc.</BoilerplateCompanyName>
+        
+        <ProjectRoot>$(MSBuildProjectDirectory)\Boilerplate</ProjectRoot>
+        <SolutionRoot>$(ProjectRoot)\Source</SolutionRoot>
+        <AutobuildRoot>$(ProjectRoot)\Build</AutobuildRoot>
+
+        <ExtensionTasksPath>.\</ExtensionTasksPath>
+        <RegexReadyBoilerplateProductName>$(BoilerplateProductName.Replace(&quot;.&quot;,&quot;\.&quot;))</RegexReadyBoilerplateProductName>
+        <RegexReadyBoilerplateDatabase>$(BoilerplateDatabase.Replace(&quot;.&quot;,&quot;\.&quot;))</RegexReadyBoilerplateDatabase>
+        <RegexReadyBoilerplateCompanyName>$(BoilerplateCompanyName.Replace(&quot;.&quot;,&quot;\.&quot;))</RegexReadyBoilerplateCompanyName>
+    </PropertyGroup>
+
+    <Import Project="$(AutobuildRoot)\Tasks\MSBuild.ExtensionPack.Tasks\MSBuild.ExtensionPack.tasks" />
+
+    <ItemGroup>
+        <BoilerplateProjectFolders
+            Include="$(SolutionRoot)\**\$(BoilerplateProductName)*"/>
+    </ItemGroup>        
+    
+    <Target Name="Default">
+                
+        <!-- rename folders -->
+        <Message Importance="high" Text="Renaming folders..." />
+        <FindUnder
+            TaskAction="FindDirectories"
+            Path="$(SolutionRoot)"
+            SearchPattern="$(BoilerplateProductName)*"
+            Recursive="False">
+                <Output ItemName="SourceFolders" TaskParameter="FoundItems" />
+        </FindUnder>
+        <ItemGroup>
+            <DestinationFolders Include="@(SourceFolders.FullPath)">
+                <OldPath>%(SourceFolders.FullPath)</OldPath>
+                <NewPath>$([System.String]::Copy(&quot;%(SourceFolders.FullPath)&quot;).Replace(&quot;$(BoilerplateProductName)&quot;,&quot;$(ProductName)&quot;))</NewPath>
+            </DestinationFolders>
+        </ItemGroup>
+        <Folder TaskAction="Move" Path="%(DestinationFolders.OldPath)" TargetPath="%(DestinationFolders.NewPath)" Condition="'%(DestinationFolders.OldPath)'!=''"/>
+
+        <!-- rename files -->
+        <Message Importance="high" Text="Renaming files..." />
+        <FindUnder
+            TaskAction="FindFiles"
+            Path="$(ProjectRoot)"
+            SearchPattern="$(BoilerplateProductName)*"
+            Recursive="True">
+                <Output TaskParameter="FoundItems" ItemName="SourceFiles" />
+        </FindUnder>
+        <ItemGroup>
+            <DestinationFiles Include="@(SourceFiles.FullPath)">
+                <OldPath>%(SourceFiles.FullPath)</OldPath>
+                <NewPath>$([System.String]::Copy(&quot;%(SourceFiles.FullPath)&quot;).Replace(&quot;$(BoilerplateProductName)&quot;,&quot;$(ProductName)&quot;))</NewPath>
+            </DestinationFiles>
+        </ItemGroup>
+        <File TaskAction="Move" Path="%(DestinationFiles.OldPath)" TargetPath="%(DestinationFiles.NewPath)" Condition="'%(DestinationFiles.OldPath)'!=''"/>
+        
+        <!-- replace branding -->
+        <Message Importance="high" Text="Replacing branding..." />
+        <ItemGroup>
+            <BrandingFiles Include="
+                    $(SolutionRoot)\**\GlobalAssemblyInfo.cs;
+                    $(SolutionRoot)\**\*.cshtml;"/>
+        </ItemGroup>
+        <File TaskAction="FilterByContent" RegexPattern="$(RegexReadyBoilerplateCompanyName)" Files="@(BrandingFiles)">
+            <Output TaskParameter="IncludedFiles" ItemName="UnprocessedBrandingFiles"/>
+        </File>
+        <File 
+            TaskAction="Replace" 
+            RegexPattern="$(RegexReadyBoilerplateCompanyName)" 
+            Replacement="$(ProductCompanyName)"
+            Files="@(UnprocessedBrandingFiles)"
+            Condition="'@(UnprocessedBrandingFiles)'!=''"/>
+          
+        <!-- replace content -->
+        <Message Importance="high" Text="Replacing content..." />
+        <ItemGroup>
+            <ContentFiles Include="
+                    $(AutobuildRoot)\**\*.cmd;
+                    $(AutobuildRoot)\**\*.Targets;
+                    $(AutobuildRoot)\**\*.override;
+                    $(AutobuildRoot)\**\*.proj;
+                    
+                    $(SolutionRoot)\**\*.cs;
+                    $(SolutionRoot)\**\*.cshtml;
+                    $(SolutionRoot)\**\*.asax;
+                    $(SolutionRoot)\**\*.config;
+                    $(SolutionRoot)\**\*.csproj;
+                    $(SolutionRoot)\**\*.sln;
+                    $(SolutionRoot)\**\*.svc;
+                    $(SolutionRoot)\**\*.tt;
+                    $(SolutionRoot)\**\*.cmd;"/>
+        </ItemGroup>
+        <File TaskAction="FilterByContent" RegexPattern="$(RegexReadyBoilerplateProductName)" Files="@(ContentFiles)">
+            <Output TaskParameter="IncludedFiles" ItemName="UnprocessedFiles"/>
+        </File>
+        <File 
+            TaskAction="Replace" 
+            RegexPattern="$(RegexReadyBoilerplateProductName)" 
+            Replacement="$(ProductName)" 
+            Files="@(UnprocessedFiles)"
+            Condition="'@(UnprocessedFiles)'!=''"/>
+            
+        <!-- rename database -->
+        <Message Importance="high" Text="Replacing connection strings..." />
+        <ItemGroup>
+            <SqlRelatedContentFiles Include="$(SolutionRoot)\**\*.config;
+                    $(ProjectRoot)\**\*.cmd;
+                    $(AutobuildRoot)\**\Custom.Targets"/>
+        </ItemGroup>
+        <File TaskAction="FilterByContent" RegexPattern="Initial Catalog=$(RegexReadyBoilerplateDatabase)" Files="@(SqlRelatedContentFiles)">
+            <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlRelatedFiles"/>
+        </File>
+        <File 
+            TaskAction="Replace" 
+            RegexPattern="Initial Catalog=$(RegexReadyBoilerplateDatabase)" 
+            Replacement="Initial Catalog=$(ProductDatabase)" 
+            Files="@(UnprocessedSqlRelatedFiles)"
+            Condition="'@(UnprocessedSqlRelatedFiles)'!=''"/>
+            
+        <!-- rename database schema -->
+        <Message Importance="high" Text="Replacing database schema..." />
+        <ItemGroup>
+            <SqlContentFiles Include="$(SolutionRoot)\**\*.sql;"/>
+        </ItemGroup>
+        <File TaskAction="FilterByContent" RegexPattern=" $(BoilerplateDatabaseSchema)\." Files="@(SqlContentFiles)">
+            <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlFiles1"/>
+        </File>
+        <File 
+            TaskAction="Replace" 
+            RegexPattern=" $(BoilerplateDatabaseSchema)\." 
+            Replacement=" $(ProductDatabaseSchema)." 
+            Files="@(UnprocessedSqlFiles1)"
+            Condition="'@(UnprocessedSqlFiles1)'!=''"/>
+            
+        <File TaskAction="FilterByContent" RegexPattern=" $(BoilerplateDatabaseSchema) " Files="@(SqlContentFiles)">
+            <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlFiles2"/>
+        </File>    
+        <File 
+            TaskAction="Replace" 
+            RegexPattern=" $(BoilerplateDatabaseSchema) " 
+            Replacement=" $(ProductDatabaseSchema) " 
+            Files="@(UnprocessedSqlFiles2)"
+            Condition="'@(UnprocessedSqlFiles2)'!=''"/>
+            
+        <File TaskAction="FilterByContent" RegexPattern="\[$(BoilerplateDatabaseSchema)\]" Files="@(SqlContentFiles)">
+            <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlFiles3"/>
+        </File>    
+        <File 
+            TaskAction="Replace" 
+            RegexPattern="\[$(BoilerplateDatabaseSchema)\]" 
+            Replacement="[$(ProductDatabaseSchema)]" 
+            Files="@(UnprocessedSqlFiles3)"
+            Condition="'@(UnprocessedSqlFiles3)'!=''"/>
+        
+        <ItemGroup>
+            <CsSqlContentFiles Include="$(SolutionRoot)\**\MsSql2005DatabaseConfigurator.cs;"/>
+        </ItemGroup>
+        <File TaskAction="FilterByContent" RegexPattern="&quot;$(BoilerplateDatabaseSchema)&quot;" Files="@(CsSqlContentFiles)">
+            <Output TaskParameter="IncludedFiles" ItemName="UnprocessedCsSqlFiles"/>
+        </File>    
+        <File 
+            TaskAction="Replace" 
+            RegexPattern="&quot;$(BoilerplateDatabaseSchema)&quot;" 
+            Replacement="&quot;$(ProductDatabaseSchema)&quot;" 
+            Files="@(UnprocessedCsSqlFiles)"
+            Condition="'@(UnprocessedCsSqlFiles)'!=''"/>
+            
+    </Target>
+
+</Project>

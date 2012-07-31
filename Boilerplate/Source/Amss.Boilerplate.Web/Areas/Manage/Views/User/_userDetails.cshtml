@@ -1,0 +1,57 @@
+﻿@model Amss.Boilerplate.Web.Areas.Manage.Models.UserModel
+
+@Html.HiddenFor(model => model.UserId)
+
+<div class="control-group">
+    @Html.LabelFor(model => model.Name)
+    <div class="controls">
+        @Html.EditorFor(model => model.Name)
+        @Html.ValidationMessageFor(model => model.Name)
+    </div>
+</div>
+
+<div class="control-group">
+    @Html.LabelFor(model => model.Login)
+    <div class="controls">
+        @Html.EditorFor(model => model.Login)
+        @Html.ValidationMessageFor(model => model.Login)
+    </div>
+</div>
+
+@if (!this.Model.UserId.HasValue)
+{
+    <div class="control-group">
+        @Html.LabelFor(model => model.Password)
+        <div class="controls">
+            @Html.PasswordFor(model => model.Password)
+            @Html.ValidationMessageFor(model => model.Password)
+        </div>
+    </div>
+}
+
+<div class="control-group">
+    @Html.LabelFor(model => model.Email)
+    <div class="controls">
+        @Html.EditorFor(model => model.Email)
+        @Html.ValidationMessageFor(model => model.Email)
+    </div>
+</div>
+
+<div class="control-group">
+    @Html.LabelFor(model => model.PartnerId)
+    <div class="controls">
+        @Html.DropDownListFor(m => m.PartnerId, new SelectList(this.Model.AvailablePartners, "Key", "Value"), "<< empty >>")
+        @Html.ValidationMessageFor(model => model.PartnerId)
+    </div>
+</div>
+
+<div class="control-group">
+    @Html.LabelFor(model => model.RoleId)
+    <div class="controls">
+        @Html.DropDownListFor(m => m.RoleId, new SelectList(this.Model.AvailableRoles, "Key", "Value"))
+        @Html.ValidationMessageFor(model => model.RoleId)
+    </div>
+</div>
+
+@Html.Partial("_errorSummary")
+

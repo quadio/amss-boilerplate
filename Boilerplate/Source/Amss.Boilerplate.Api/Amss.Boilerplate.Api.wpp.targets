@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DeployManagedPipelineMode>Integrated</DeployManagedPipelineMode>
+    <AfterAddIisSettingAndFileContentsToSourceManifest>
+      DoSetAcl;MakeEmptyFolders;
+    </AfterAddIisSettingAndFileContentsToSourceManifest>
+    <AfterAddIisAndContentDeclareParametersItems>
+      DoSetParam;
+    </AfterAddIisAndContentDeclareParametersItems>
+    <AfterAddDeclareParametersItems/>
+    <OnBeforePackageUsingManifest>AddCustomSkipRules</OnBeforePackageUsingManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <CustomDirAcl Include="Logs">
+      <AclAccess>Modify</AclAccess>
+    </CustomDirAcl>
+  </ItemGroup>
+  <Target Name="DoSetAcl">
+    <ItemGroup>
+      <MsDeploySourceManifest Include="setAcl">
+        <Path>$(_MSDeployDirPath_FullPath)</Path>
+        <setAclAccess>Read,Write</setAclAccess>
+        <setAclResourceType>Directory</setAclResourceType>
+        <AdditionalProviderSettings>setAclAccess</AdditionalProviderSettings>
+      </MsDeploySourceManifest>
+      <MsDeploySourceManifest Include="setAcl">
+        <Path>$(_MSDeployDirPath_FullPath)\%(CustomDirAcl.Identity)</Path>
+        <setAclAccess Condition="%(CustomDirAcl.AclAccess) != ''">%(CustomDirAcl.AclAccess)</setAclAccess>
+        <setAclAccess Condition="%(CustomDirAcl.AclAccess) == ''">FullControl</setAclAccess>
+        <AdditionalProviderSettings>setAclAccess</AdditionalProviderSettings>
+      </MsDeploySourceManifest>
+    </ItemGroup>
+  </Target>
+  <Target Name="DoSetParam">
+    <ItemGroup>
+      <MsDeployDeclareParameters Include="SetAcl %(CustomDirAcl.Identity)">
+        <Kind>ProviderPath</Kind>
+        <Scope>setAcl</Scope>
+        <Match>^$(_EscapeRegEx_MSDeployDirPath)\\@(CustomDirAcl)$</Match>
+        <DefaultValue>{$(_MsDeployParameterNameForContentPath)}/@(CustomDirAcl)</DefaultValue>
+        <Value>$(_DestinationContentPath)/@(CustomDirAcl)</Value>
+        <Tags>Hidden</Tags>
+        <Priority>$(VsSetAclPriority)</Priority>
+        <ExcludeFromSetParameter>True</ExcludeFromSetParameter>
+      </MsDeployDeclareParameters>
+    </ItemGroup>
+  </Target>
+  <Target Name="MakeEmptyFolders">
+    <Message Text="Adding empty folder to hold downloads" />
+    <MakeDir Directories="$(_MSDeployDirPath_FullPath)\Logs"/>
+  </Target>
+  <Target Name="AddCustomSkipRules">
+    <ItemGroup>
+      <MsDeploySkipRules Include="SkipDownloadsFolder">
+        <SkipAction>Delete</SkipAction>
+        <ObjectName>dirPath</ObjectName>
+        <AbsolutePath>.*\\Logs\\$</AbsolutePath>
+        <XPath></XPath>
+      </MsDeploySkipRules>
+      <MsDeploySkipRules Include="SkipDownloadsSubFolders">
+        <SkipAction>Delete</SkipAction>
+        <ObjectName>dirPath</ObjectName>
+        <AbsolutePath>.*\\Logs\\.*$</AbsolutePath>
+        <XPath></XPath>
+      </MsDeploySkipRules>
+    </ItemGroup>
+  </Target>
+</Project>

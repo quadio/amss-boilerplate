@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <MSBuildCommunityTasksPath>.\</MSBuildCommunityTasksPath>
+        <MSBuildGitTasksPath>.\</MSBuildGitTasksPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ProjectRoot Condition="'$(ProjectRoot)' == ''">$([System.IO.Directory]::GetParent($(MSBuildProjectDirectory)))</ProjectRoot>
+        <ProductVersionFile Condition="'$(ProductVersionFile)' == ''">$(ProjectRoot)\Source\product.version</ProductVersionFile>
+        <Repository Condition="'$(Repository)' == ''"></Repository>
+    </PropertyGroup>
+
+    <Import Project=".\Tasks\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets"  Condition="'$(MSBuildCommunityTasksLib)' == ''"/>
+    <Import Project=".\Tasks\MSBuild.Git\MSBuild.Git.tasks" Condition="'$(MSBuildGitTasksLib)' == ''"/>
+
+    <!--///////////////////////////Target IncrementBuild/////////////////////////////////////////////////////////////////-->
+    <Target Name="IncrementBuild">
+
+        <CallTarget Targets="ResetChanges" />
+
+        <Message Text="generate version file" />
+        <MSBuild.Community.Tasks.Version
+             VersionFile="$(ProductVersionFile)"
+             MajorType="None"
+             MinorType="None"
+             BuildType="Increment"
+             RevisionType="None">
+            <Output TaskParameter="Major" PropertyName="Major" />
+            <Output TaskParameter="Minor" PropertyName="Minor" />
+            <Output TaskParameter="Build" PropertyName="Build" />
+        </MSBuild.Community.Tasks.Version>
+        <Message Text="----------------" />
+
+        <Message Text="commit version file changes"/>
+        <GitCommit
+            LocalPath="$(ProjectRoot)"
+            AddRemove="true"
+            Message="$(Major).$(Minor).$(Build).0" />
+        <Message Text="----------------" />
+
+        <Message Text="transfer changes to parent repository"/>
+        <GitPush
+            LocalPath="$(ProjectRoot)"
+            Repository="$(Repository)"
+            ContinueOnError="true">
+            <Output TaskParameter="ExitCode" PropertyName="PushResult"/>
+        </GitPush>
+        <Message Text="----------------"/>
+
+        <Message Text="done" Condition="'$(PushResult)'=='0'" />
+        <CallTarget Targets="IncrementBuildRepair" Condition="'$(PushResult)'!='0'" />
+
+    </Target>
+    <!--///////////////////////////End Target IncrementBuild/////////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target IncrementBuildRepair/////////////////////////////////////////////////////////////////-->
+    <Target Name="IncrementBuildRepair">
+
+        <Message Text="rollback last commit"/>
+        <GitReset
+            LocalPath="$(ProjectRoot)"
+            Hard="true"
+            Paths="HEAD~1" />
+        <Message Text="----------------"/>
+
+        <Message Text="update from server"/>
+        <GitPull
+            LocalPath="$(ProjectRoot)"
+            Source="$(Repository)" />
+        <Message Text="----------------"/>
+
+        <Exec Command="$(MSBuildBinPath)\msbuild /p:ProjectRoot=$(ProjectRoot);ProductVersionFile=$(ProductVersionFile);Repository=$(Repository) Common.Tasks.Extra.Targets" />
+            
+    </Target>
+    <!--///////////////////////////End Target IncrementBuildRepair/////////////////////////////////////////////////////////////////-->
+
+
+    <!--///////////////////////////Target ResetChanges/////////////////////////////////////////////////////////////////-->
+    <Target Name="ResetChanges">
+
+        <Message Text="reset compilation changes" />
+        <GitClean
+            LocalPath="$(ProjectRoot)"
+            Force="true"
+            Directories="true" />
+        <GitCheckout
+            LocalPath="$(ProjectRoot)"
+            Force="true" />
+        <Message Text="----------------" />
+
+    </Target>
+    <!--///////////////////////////End Target ResetChanges/////////////////////////////////////////////////////////////////-->
+
+</Project>

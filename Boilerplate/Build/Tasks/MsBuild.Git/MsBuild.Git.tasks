@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <MSBuildGitTasksPath Condition=" '$(MSBuildGitTasksPath)' == '' ">$(MSBuildExtensionsPath)\MSBuild.Git</MSBuildGitTasksPath>
+    <MSBuildGitTasksLib>$(MSBuildGitTasksPath)\MSBuild.Git.dll</MSBuildGitTasksLib>
+  </PropertyGroup>
+
+  <UsingTask TaskName="MSBuild.Git.GitAdd" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitChangeset" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitCheckout" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitClean" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitCommit" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitPull" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitPush" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitReset" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitRevision" AssemblyFile="$(MSBuildGitTasksLib)" />
+  <UsingTask TaskName="MSBuild.Git.GitVersion" AssemblyFile="$(MSBuildGitTasksLib)" />
+
+</Project>  

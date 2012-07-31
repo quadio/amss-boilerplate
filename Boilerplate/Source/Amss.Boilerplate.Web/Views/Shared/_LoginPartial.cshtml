@@ -1,0 +1,14 @@
+﻿@using Amss.Boilerplate.Common.Security
+@if (Request.IsAuthenticated) {
+    <div class="btn-group pull-right">
+        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+            <i class="icon-user"></i> @(((IApplicationIdentity)User.Identity).DisplayName)
+            <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+            <li><a href="#">Profile</a></li>
+            <li class="divider"></li>
+            <li>@Html.ActionLink("Sign Out", "LogOff", "Home", new { area = "Main" }, null)</li>
+        </ul>
+    </div>
+}

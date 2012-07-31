@@ -1,0 +1,60 @@
+﻿@using Amss.Boilerplate.Web.Common
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>@ViewBag.Title - Ach.Fulfllment</title>
+        <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        @Styles.Render("~/Content/css/jquery.ui", "~/Content/css/general")
+        @Scripts.Render("~/bundles/modernizr")
+        @RenderSection("styles", required: false)
+    </head>
+    <body>
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container-fluid">
+                    @if (Request.IsAuthenticated)
+                    {
+                        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </a>
+                        <a class="brand" href="@Url.RouteUrl(new { area = "Main", controller = "Home", action = "Index" })">Amss.Boilerplate<sup>@Html.ApplicationVersion()</sup></a>
+                        @Html.Partial("_LoginPartial")
+                        <div class="nav-collapse">
+                            <ul class="nav">
+                                <li @Html.ActiveItem("Home", "Index")>@Html.ActionLink("Home", "Index", "Home", new { area = "Main" }, null)</li>
+                                <li @Html.ActiveController("User", "Partner")>@Html.ActionLink("Manage", "List", "User", new { area = "Manage" }, null)</li>
+                                <li @Html.ActiveItem("Home", "About")>@Html.ActionLink("About", "About", "Home", new { area = "Main" }, null)</li>
+                                <li @Html.ActiveItem("Home", "Contact")>@Html.ActionLink("Contact", "Contact", "Home", new { area = "Main" }, null)</li>
+                            </ul>
+                        </div><!--/.nav-collapse -->
+                    }
+                    else
+                    {
+                        <a class="brand" href="#">Amss.Boilerplate<sup>@Html.ApplicationVersion()</sup></a>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+            @RenderSection("featured", required: false)
+            @RenderBody()
+            <hr>
+            <footer>
+                <div class="pull-right">
+                    <a class="brand" href="http://quad.io">
+                        <img src="~/Content/images/header_logo.png" alt="Quad.IO" />
+                    </a>
+                </div>
+                <p>&copy; Copyright 2012, MockCompany, Inc.</p>
+            </footer>
+        </div><!--/.container-->        
+       
+        @Scripts.Render("~/bundles/jquery", "~/bundles/bootstrap")
+        @RenderSection("scripts", required: false)
+    </body>
+</html>

@@ -1,0 +1,50 @@
+﻿@model Amss.Boilerplate.Web.Areas.Main.Models.LoginModel
+
+@{
+    ViewBag.Title = "Log in";
+}
+<div class="row">
+    <div class="offset3 span6">
+
+        @using (Html.BeginForm("Login", "Home", new { ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "well form-horizontal form-login" }))
+        {
+            <fieldset>
+                <legend>Log In</legend>
+                @Html.ValidationSummary(true, "Log in was unsuccessful. Please correct the errors and try again.")
+                
+                <div class="control-group">
+                    @Html.LabelFor(m => m.UserName, new { @class = "control-label" })
+                    <div class="controls">
+                        @Html.TextBoxFor(m => m.UserName, new { @class = "input-xlarge" })
+                        @Html.ValidationMessageFor(m => m.UserName)
+                    </div>
+                </div>
+        
+                <div class="control-group">
+                    @Html.LabelFor(m => m.Password, new { @class = "control-label" })
+                    <div class="controls">
+                        @Html.PasswordFor(m => m.Password, new { @class = "input-xlarge" })
+                        @Html.ValidationMessageFor(m => m.Password)
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            @Html.CheckBoxFor(m => m.RememberMe)
+                            @Html.DisplayNameFor(m => m.RememberMe)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn">Log in</button>
+                </div>
+            </fieldset>
+        }
+    </div>
+  </div>
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

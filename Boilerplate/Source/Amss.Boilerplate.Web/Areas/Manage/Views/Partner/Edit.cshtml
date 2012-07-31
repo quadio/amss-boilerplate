@@ -1,0 +1,23 @@
+﻿@model Amss.Boilerplate.Web.Areas.Manage.Models.PartnerModel
+
+@{
+    ViewBag.Title = "Edit Partner";
+}
+
+@using (Html.BeginForm("Edit", "Partner", new { area = "Manage" }))
+{
+    <fieldset>
+        <legend>Edit Partner</legend>
+
+        @Html.Partial("_partnerDetails", this.Model)
+        
+        <div class="form-actions btn-group">
+                <input type="submit" value="Update" class="btn btn-large btn-primary" />
+                @Html.ActionLink("Back to List", "List", "Partner", null, new { @class = "btn btn-large" })
+        </div>
+    </fieldset>
+}
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

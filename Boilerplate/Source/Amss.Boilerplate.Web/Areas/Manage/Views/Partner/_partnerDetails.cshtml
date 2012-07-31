@@ -1,0 +1,23 @@
+﻿@model Amss.Boilerplate.Web.Areas.Manage.Models.PartnerModel
+
+@Html.HiddenFor(model => model.PartnerId)
+
+<div class="control-group">
+    @Html.LabelFor(model => model.Name)
+    <div class="controls">
+        @Html.EditorFor(model => model.Name)
+        @Html.ValidationMessageFor(model => model.Name)
+    </div>
+</div>
+
+<div class="control-group">
+    @Html.LabelFor(model => model.Disabled)
+    <div class="controls">
+        @Html.CheckBoxFor(model => model.Disabled)
+        @Html.ValidationMessageFor(model => model.Disabled)
+    </div>
+</div>
+
+
+@Html.Partial("_errorSummary")
+

@@ -1,0 +1,22 @@
+﻿@model HandleErrorInfo
+
+@{
+    ViewBag.Title = "Server Error";
+}
+
+<hgroup class="title">
+    <h3 class="error">@Model.Exception.Message</h3>
+</hgroup>
+
+@if(@HttpContext.Current.IsDebuggingEnabled){
+
+<hr/>
+
+<div>
+    <h5>Action: <span style="font-weight: normal">@Model.ActionName</span></h5>
+    <h5>Controller: <span style="font-weight: normal"> @Model.ControllerName</span> </h5>
+    <pre style="font-size: 1.2em">@Model.Exception.ToString()</pre>
+</div>
+
+}
+    
