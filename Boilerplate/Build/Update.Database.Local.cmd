@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 c:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild ..\Source\Amss.Boilerplate.Migrations\Amss.Boilerplate.Migrations.csproj /nologo /v:m
         if %ERRORLEVEL% NEQ 0 (
             goto:end
