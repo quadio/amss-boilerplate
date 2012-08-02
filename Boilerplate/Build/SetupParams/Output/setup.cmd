@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 copy /b/y NUL %WINDIR%\06CF2EB6-94E6-4a60-91D8-AB945AE8CF38 >NUL 2>&1
 if errorlevel 1 goto:nonadmin
 del %WINDIR%\06CF2EB6-94E6-4a60-91D8-AB945AE8CF38 >NUL 2>&1
