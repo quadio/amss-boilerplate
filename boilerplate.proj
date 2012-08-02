@@ -34,7 +34,6 @@
     </ItemGroup>        
     
     <Target Name="Default">
-                
         <!-- rename folders -->
         <Message Importance="high" Text="Renaming folders..." />
         <FindUnder
@@ -80,7 +79,7 @@
             <Output TaskParameter="IncludedFiles" ItemName="UnprocessedBrandingFiles"/>
         </File>
         <File 
-            TaskAction="Replace" 
+            TaskAction="Replace" TextEncoding="utf-16" 
             RegexPattern="$(RegexReadyBoilerplateCompanyName)" 
             Replacement="$(ProductCompanyName)"
             Files="@(UnprocessedBrandingFiles)"
@@ -109,7 +108,7 @@
             <Output TaskParameter="IncludedFiles" ItemName="UnprocessedFiles"/>
         </File>
         <File 
-            TaskAction="Replace" 
+            TaskAction="Replace" TextEncoding="utf-16" 
             RegexPattern="$(RegexReadyBoilerplateProductName)" 
             Replacement="$(ProductName)" 
             Files="@(UnprocessedFiles)"
@@ -126,7 +125,7 @@
             <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlRelatedFiles"/>
         </File>
         <File 
-            TaskAction="Replace" 
+            TaskAction="Replace" TextEncoding="utf-16" 
             RegexPattern="Initial Catalog=$(RegexReadyBoilerplateDatabase)" 
             Replacement="Initial Catalog=$(ProductDatabase)" 
             Files="@(UnprocessedSqlRelatedFiles)"
@@ -141,7 +140,7 @@
             <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlFiles1"/>
         </File>
         <File 
-            TaskAction="Replace" 
+            TaskAction="Replace" TextEncoding="utf-16" 
             RegexPattern=" $(BoilerplateDatabaseSchema)\." 
             Replacement=" $(ProductDatabaseSchema)." 
             Files="@(UnprocessedSqlFiles1)"
@@ -151,7 +150,7 @@
             <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlFiles2"/>
         </File>    
         <File 
-            TaskAction="Replace" 
+            TaskAction="Replace" TextEncoding="utf-16" 
             RegexPattern=" $(BoilerplateDatabaseSchema) " 
             Replacement=" $(ProductDatabaseSchema) " 
             Files="@(UnprocessedSqlFiles2)"
@@ -161,7 +160,7 @@
             <Output TaskParameter="IncludedFiles" ItemName="UnprocessedSqlFiles3"/>
         </File>    
         <File 
-            TaskAction="Replace" 
+            TaskAction="Replace" TextEncoding="utf-16" 
             RegexPattern="\[$(BoilerplateDatabaseSchema)\]" 
             Replacement="[$(ProductDatabaseSchema)]" 
             Files="@(UnprocessedSqlFiles3)"
@@ -174,7 +173,7 @@
             <Output TaskParameter="IncludedFiles" ItemName="UnprocessedCsSqlFiles"/>
         </File>    
         <File 
-            TaskAction="Replace" 
+            TaskAction="Replace" TextEncoding="utf-16" 
             RegexPattern="&quot;$(BoilerplateDatabaseSchema)&quot;" 
             Replacement="&quot;$(ProductDatabaseSchema)&quot;" 
             Files="@(UnprocessedCsSqlFiles)"
