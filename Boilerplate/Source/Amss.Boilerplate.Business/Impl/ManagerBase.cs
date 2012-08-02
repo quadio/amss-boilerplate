@@ -1,6 +1,7 @@
 ﻿namespace Amss.Boilerplate.Business.Impl
 {
     using System.Collections.Generic;
+    using System.Linq;
 
     using Amss.Boilerplate.Business.Impl.Validation;
     using Amss.Boilerplate.Data;
@@ -53,6 +54,12 @@
         public virtual IEnumerable<T> FindAll(IQueryData<T> queryData)
         {
             var result = this.Repository.FindAll(queryData);
+            return result;
+        }
+
+        public virtual IQueryable<T> Query(IQueryData<T> queryData)
+        {
+            var result = this.Repository.Query<T>(queryData);
             return result;
         }
 

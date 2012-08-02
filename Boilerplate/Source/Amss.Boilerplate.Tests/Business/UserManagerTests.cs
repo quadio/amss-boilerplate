@@ -145,7 +145,7 @@
             }
         }
 
-        [Test(Description = "If manager returns IQueryable UI may perform request which our data layer can not proceed. If FindAll returns IQueryable - test failed")]
+        [Test]
         public void PagerTest()
         {
             var manager = this.Locator.GetInstance<IUserManager>();
@@ -165,6 +165,17 @@
             {
                 Trace.WriteLine("User: " + user.Name + ". Login: " + user.Login);
             }
+        }
+
+        [Test]
+        public void WhereTest()
+        {
+            var manager = this.Locator.GetInstance<IUserManager>();
+            var query = manager.Query(new UserAll ());
+
+            var mock = query.Where(u => u.Email != null ? u.Email.StartsWith("a") : u.Email.StartsWith("b"));
+
+            Assert.That(mock, Is.Not.Null);
         }
 
         private UserEntity CreateUser(

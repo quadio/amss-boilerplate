@@ -87,20 +87,68 @@
         /* datatables*/
         $(document).ready(function () {
 
+            var makeLink = function(sSource, aoData) {
+                sSource += '&$inlinecount=allpages';
+                sSource += '&$skip=' + aoData[3]['value']; // iDisplayStart
+                sSource += '&$top=' + aoData[4]['value']; // iDisplayLength
+                
+                // TODO search - $filter
+                // TODO sorting -  $orderby
+
+                return sSource;
+            };
+            
             $('#myDataTable').dataTable({
                 "bServerSide": true,
-                "sAjaxSource": '@Url.Action("List3")',
+                "sAjaxSource": '/Services/ClientApi.svc/Users?',
                 "bProcessing": true,
                 "sDom": "<'row'<'span4'l><'span5'f>r>t<'row'<'span4'i><'span5'p>>",
                 "sPaginationType": "bootstrap",
                 "fnServerData": function ( sSource, aoData, fnCallback ) {
-                      $.ajax( {
+
+                    sSource = makeLink(sSource, aoData);
+                    
+                    $.ajax({
+                        "dataType": 'json',
+                        "type": "GET",
+                        "url": sSource,
+                        "success": function(json) {
+                            var iTotalRecords = json.d.results.length;
+                            var iTotalDisplayRecords = json.d.__count;
+                            var sEcho = aoData[0]['value'];
+
+                            var aaData = [];
+
+                            var array = json.d.results;
+                            for (var i = 0; i < array.length; i++) {
+                                aaData[i] = [];
+                                var j = 0;
+                                for (var prop in array[i]) {
+                                    if (array[i].hasOwnProperty(prop) && prop !== '__metadata') {
+                                        aaData[i][j] = array[i][prop];
+                                        j++;
+                                    }
+                                }
+                            }
+
+                            var js = {
+                                "iTotalRecords": iTotalRecords,
+                                "iTotalDisplayRecords": iTotalDisplayRecords,
+                                "sEcho": sEcho,
+                                "aaData": aaData
+                            };
+
+                            fnCallback(js);
+                        }
+                    });
+
+                       /*$.ajax( {
                         "dataType": 'json', 
                         "type": "POST", 
                         "url": sSource, 
                         "data": aoData, 
                         "success": fnCallback
-                      } );
+                      } );*/
                     },
                 "aoColumns": [
                                 { "sName": "Id", "bVisible": false},
