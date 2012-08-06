@@ -2,7 +2,8 @@
 
 amss-boilerplate (Asp.net Mvc Service Stack Boilerplate) is our attempt at a resusable code base for building common enterprise applications (web applications, rest/web services, smart-clients etc). It uses a variety of frameworks including ServiceStack.net, Fluent Validation, Log4Net, and others to support basic development best practices. We even included build and CI scripts to help keep your code solid. Our goal is to develop a clean application shell created in minutes rather than the days it typically takes to start up a new project.
 
-*ServiceStack.Net*
+# #ServiceStack.Net
+
 We chose [ServiceStack.net](http://www.servicestack.net/) over WPF because we felt this open source framework better greatly simplified building restful services in .net. Because the vast majority of what we do today is restful, we don't need most of the WCF features.
 
 ## Types of Applications Supported
