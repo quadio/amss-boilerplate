@@ -67,7 +67,7 @@ Validation
 
 - Application has few validation levels: client-side validation (javascript), mvc model validation on presentation layer (Data Annotations, FluentValidation could be used also), business validation on business layer, database validation (constrains, reference integrity, primary/foreign keys etc)      
 
-## Remarks 
+## Working Client Side
 
 ### Using datatables/jqGrid with oData (Data Services)
 
