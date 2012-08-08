@@ -16,7 +16,7 @@ Worker Processes
 VS 2010
 .NET Framework 4
 Code Contracts 
-ASP.NET MVC 4 RC (it should also work on MVC 3)
+ASP.NET MVC 4 RC
 msbuild (for automated build system, path to msbuild.exe should be in system paths)
 
 ## Using the Rename Command
