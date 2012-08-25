@@ -1,7 +1,9 @@
 ﻿namespace Amss.Boilerplate.Web.Services
 {
     using System;
+    using System.Data.Services;
     using System.Linq;
+    using System.Linq.Expressions;
 
     using Amss.Boilerplate.Business;
     using Amss.Boilerplate.Common;
@@ -46,8 +48,7 @@
             {
                 if (this.users == null)
                 {
-                    // var list = this.UserManager.FindAll(new UserPaged(0, 20));
-                    var list = this.UserManager.FindAll(new UserAll());
+                    var list = this.UserManager.Query(new UserAll());
                     this.users = (from u in list
                                   select
                                       new UserGridModel
@@ -55,10 +56,10 @@
                                               Id = (int)u.Id, 
                                               Name = u.Name, 
                                               Email = u.Email, 
-                                              Login =
+                                              /*Login =
                                                   u.UserPasswordCredential != null
                                                       ? u.UserPasswordCredential.Login
-                                                      : string.Empty
+                                                      : string.Empty*/
                                           }).AsQueryable();
                 }
 
